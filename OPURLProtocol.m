@@ -8,7 +8,7 @@
 
 #import "OPURLProtocol.h"
 
-@interface OPURLProtocol () <NSURLConnectionDelegate, NSURLConnectionDataDelegate>
+@interface OPURLProtocol ()
 @property (nonatomic, strong, readwrite) NSURLConnection *connection;
 @property (nonatomic, strong, readwrite) NSMutableData *data;
 @property (nonatomic, strong, readwrite) NSURLResponse *response;
