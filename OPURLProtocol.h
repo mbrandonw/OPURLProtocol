@@ -12,6 +12,6 @@
 
 @property (nonatomic, strong, readonly) NSURLConnection *connection;
 @property (nonatomic, strong, readonly) NSMutableData *data;
-@property (nonatomic, strong, readonly) NSURLResponse *response;
+@property (nonatomic, strong, readonly) NSHTTPURLResponse *response;
 
 @end

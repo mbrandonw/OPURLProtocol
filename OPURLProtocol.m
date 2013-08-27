@@ -11,7 +11,7 @@
 @interface OPURLProtocol ()
 @property (nonatomic, strong, readwrite) NSURLConnection *connection;
 @property (nonatomic, strong, readwrite) NSMutableData *data;
-@property (nonatomic, strong, readwrite) NSURLResponse *response;
+@property (nonatomic, strong, readwrite) NSHTTPURLResponse *response;
 @end
 
 @implementation OPURLProtocol
@@ -59,14 +59,15 @@
   [self.data appendData:data];
 }
 
--(void) connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
+-(void) connection:(NSURLConnection *)connection didReceiveResponse:(NSHTTPURLResponse *)response {
   [self.client URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageAllowed];
   self.response = response;
 }
 
--(NSURLRequest*) connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)response {
+-(NSURLRequest*) connection:(NSURLConnection *)connection willSendRequest:(NSURLRequest *)request redirectResponse:(NSHTTPURLResponse *)response {
   if (response) {
     [self.client URLProtocol:self wasRedirectedToRequest:request redirectResponse:response];
+    return nil;
   }
   return request;
 }
