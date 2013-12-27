@@ -52,16 +52,13 @@ static NSString *cachesSubdirectory = @"OPCacheURLProtocol";
 
 -(void) startLoading {
 
-  OPCachedData *cache = [NSKeyedUnarchiver unarchiveObjectWithFile:[[self class] cachePathForRequest:self.request]];
-  if (cache) {
-    NSData *data = [cache data];
-    NSURLResponse *response = [cache response];
-    [[self client] URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageAllowed];
-    [[self client] URLProtocol:self didLoadData:data];
-    [[self client] URLProtocolDidFinishLoading:self];
-  }
-  else
-  {
+  NSString *cachePath = [[self class] cachePathForRequest:self.request];
+  OPCachedData *cachedData = [NSKeyedUnarchiver unarchiveObjectWithFile:cachePath];
+  if (cachedData) {
+    [self.client URLProtocol:self didReceiveResponse:cachedData.response cacheStoragePolicy:NSURLCacheStorageAllowed];
+    [self.client URLProtocol:self didLoadData:cachedData.data];
+    [self.client URLProtocolDidFinishLoading:self];
+  } else {
     [super startLoading];
   }
 }
