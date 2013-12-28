@@ -8,7 +8,14 @@
 
 #import "OPURLProtocol.h"
 
+extern NSString* const OPCachingURLHeader;
+extern NSString* const OPCachingForceURLHeader;
+
 @interface OPCacheURLProtocol : OPURLProtocol
+
+/**
+ */
++(void) clearCache;
 
 /**
  Override to custom which requests will be cached to the disk.

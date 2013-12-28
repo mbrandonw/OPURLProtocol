@@ -8,8 +8,8 @@
 
 #import "OPCacheURLProtocol.h"
 
-static NSString *OPCachingURLHeader = @"X-OPCache";
-static NSString *cachesSubdirectory = @"OPCacheURLProtocol";
+NSString* const OPCachingURLHeader = @"X-OPCache";
+NSString* const OPCachingForceURLHeader = @"X-OPCache-Force";
 
 @interface OPCachedData : NSObject <NSCoding>
 @property (nonatomic, strong) NSData *data;
@@ -17,18 +17,15 @@ static NSString *cachesSubdirectory = @"OPCacheURLProtocol";
 @end
 
 @interface OPCacheURLProtocol (/**/)
++(NSString*) cacheDirectoryPath;
++(void) ensureCacheDirectory;
 +(NSString*) cachePathForRequest:(NSURLRequest*)request;
 @end
 
 @implementation OPCacheURLProtocol
 
 +(void) initialize {
-  if (self == [OPCacheURLProtocol class]) {
-    [[NSFileManager defaultManager] createDirectoryAtPath:[[NSFileManager cachesDirectoryPath] stringByAppendingPathComponent:cachesSubdirectory]
-                              withIntermediateDirectories:YES
-                                               attributes:nil
-                                                    error:NULL];
-  }
+  [[self class] ensureCacheDirectory];
 }
 
 +(BOOL) requestIsCacheable:(NSURLRequest*)request {
@@ -53,8 +50,16 @@ static NSString *cachesSubdirectory = @"OPCacheURLProtocol";
 -(void) startLoading {
 
   NSString *cachePath = [[self class] cachePathForRequest:self.request];
-  OPCachedData *cachedData = [NSKeyedUnarchiver unarchiveObjectWithFile:cachePath];
+  OPCachedData *cachedData = nil;
+  if (! self.request.allHTTPHeaderFields[OPCachingForceURLHeader]) {
+    cachedData = [NSKeyedUnarchiver unarchiveObjectWithFile:cachePath];
+  }
+
   if (cachedData) {
+    [[NSFileManager defaultManager] setAttributes:@{ NSFileModificationDate: [NSDate date] }
+                                     ofItemAtPath:cachePath
+                                            error:NULL];
+
     [self.client URLProtocol:self didReceiveResponse:cachedData.response cacheStoragePolicy:NSURLCacheStorageAllowed];
     [self.client URLProtocol:self didLoadData:cachedData.data];
     [self.client URLProtocolDidFinishLoading:self];
@@ -74,13 +79,28 @@ static NSString *cachesSubdirectory = @"OPCacheURLProtocol";
   [super connectionDidFinishLoading:connection];
 }
 
++(void) clearCache {
+  [[NSFileManager defaultManager] removeItemAtPath:[[self class] cacheDirectoryPath] error:NULL];
+  [self ensureCacheDirectory];
+}
+
 #pragma mark -
 #pragma mark Private methods
 #pragma mark -
 
++(NSString*) cacheDirectoryPath {
+  return [[NSFileManager cachesDirectoryPath]
+          stringByAppendingPathComponent:[NSString stringWithFormat:@"OPCacheURLProtocol/%@", NSStringFromClass([self class])]];
+}
+
++(void) ensureCacheDirectory {
+  [[NSFileManager defaultManager]
+   createDirectoryAtPath:[[self class] cacheDirectoryPath]
+   withIntermediateDirectories:YES attributes:nil error:NULL];
+}
+
 +(NSString*) cachePathForRequest:(NSURLRequest*)request {
-  return [[[NSFileManager cachesDirectoryPath]
-           stringByAppendingPathComponent:cachesSubdirectory]
+  return [[[self class] cacheDirectoryPath]
           stringByAppendingPathComponent:[NSString stringWithFormat:@"%i", request.URL.absoluteString.hash]];
 }
 

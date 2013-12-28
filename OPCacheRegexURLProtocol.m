@@ -17,7 +17,6 @@
 +(BOOL) requestIsCacheable:(NSURLRequest *)request {
   for (NSRegularExpression *regex in [[self class] cacheableURLRegexes]) {
     if ([request.URL.absoluteString matches:regex]) {
-      DLogSimple(@"%@", request.URL.absoluteString);
       return YES;
     }
   }
