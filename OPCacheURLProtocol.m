@@ -24,8 +24,66 @@ NSString* const OPCachingForceURLHeader = @"X-OPCache-Force";
 
 @implementation OPCacheURLProtocol
 
++(NSUInteger) diskCacheSize {
+  return 1024 * 1024 * 30;
+}
+
 +(void) initialize {
   [[self class] ensureCacheDirectory];
+
+  NSFileManager *manager = NSFileManager.defaultManager;
+
+  [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidEnterBackgroundNotification object:nil usingBlock:^(NSNotification *note) {
+
+    // clean up the old files, and let the OS know this may take some time.
+    UIBackgroundTaskIdentifier taskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:nil];
+    [(NSBlockOperation*)[NSBlockOperation blockOperationWithBlock:^{
+
+      NSArray *files = [manager
+                        contentsOfDirectoryAtURL:[NSURL fileURLWithPath:[[self class] cacheDirectoryPath]]
+                        includingPropertiesForKeys:@[NSURLAttributeModificationDateKey]
+                        options:NSDirectoryEnumerationSkipsHiddenFiles
+                        error:NULL];
+
+      NSUInteger totalSize = 0;
+      for (NSURL *url in files) {
+        @autoreleasepool {
+          NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:url.path error:NULL];
+          totalSize += [attributes[NSFileSize] unsignedIntegerValue];
+        }
+      }
+
+      if (totalSize < self.class.diskCacheSize) {
+        return;
+      }
+
+      NSArray *sortedFiles = [files sortedArrayUsingComparator:^NSComparisonResult(NSURL *url1, NSURL *url2) {
+        NSDate *date1 = nil, *date2 = nil;
+        NSError *error1 = nil, *error2 = nil;
+        if ([url1 getResourceValue:&date1 forKey:NSURLAttributeModificationDateKey error:&error1] &&
+            [url2 getResourceValue:&date2 forKey:NSURLAttributeModificationDateKey error:&error2]) {
+          return [date1 compare:date2];
+        }
+        return NSOrderedSame;
+      }];
+
+      // remove old files until we get under our cache size limit
+      for (NSURL *url in sortedFiles) {
+        @autoreleasepool {
+          if (totalSize >= self.class.diskCacheSize) {
+            NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:url.path error:NULL];
+            NSUInteger size = [attributes[NSFileSize] unsignedIntegerValue];
+            totalSize -= size;
+            [[NSFileManager defaultManager] removeItemAtPath:url.path error:NULL];
+          } else {
+            break ;
+          }
+        }
+      }
+
+      [[UIApplication sharedApplication] endBackgroundTask:taskIdentifier];
+    }] start];
+  }];
 }
 
 +(BOOL) requestIsCacheable:(NSURLRequest*)request {

@@ -18,6 +18,10 @@ extern NSString* const OPCachingForceURLHeader;
 +(void) clearCache;
 
 /**
+ */
++(NSUInteger) diskCacheSize;
+
+/**
  Override to custom which requests will be cached to the disk.
  */
 +(BOOL) requestIsCacheable:(NSURLRequest*)request;
