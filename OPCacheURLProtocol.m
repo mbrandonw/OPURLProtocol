@@ -53,10 +53,6 @@ NSString* const OPCachingForceURLHeader = @"X-OPCache-Force";
         }
       }
 
-      if (totalSize < self.class.diskCacheSize) {
-        return;
-      }
-
       NSArray *sortedFiles = [files sortedArrayUsingComparator:^NSComparisonResult(NSURL *url1, NSURL *url2) {
         NSDate *date1 = nil, *date2 = nil;
         NSError *error1 = nil, *error2 = nil;
