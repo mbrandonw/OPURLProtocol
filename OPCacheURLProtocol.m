@@ -155,7 +155,7 @@ NSString* const OPCachingForceURLHeader = @"X-OPCache-Force";
 
 +(NSString*) cachePathForRequest:(NSURLRequest*)request {
   return [[[self class] cacheDirectoryPath]
-          stringByAppendingPathComponent:[NSString stringWithFormat:@"%i", request.URL.absoluteString.hash]];
+          stringByAppendingPathComponent:[NSString stringWithFormat:@"%lu", (unsigned long)request.URL.absoluteString.hash]];
 }
 
 @end
