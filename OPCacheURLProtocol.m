@@ -25,7 +25,7 @@ NSString* const OPCachingForceURLHeader = @"X-OPCache-Force";
 @implementation OPCacheURLProtocol
 
 +(NSUInteger) diskCacheSize {
-  return 1024 * 1024 * 30;
+  return 1024 * 1024 * 10;
 }
 
 +(void) initialize {
