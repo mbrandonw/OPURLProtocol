@@ -29,6 +29,7 @@ NSString* const OPCachingForceURLHeader = @"X-OPCache-Force";
 }
 
 +(void) initialize {
+  [super initialize];
 
   // We do actually want to execute this for EVERY subclass of OPCacheURLProtocol
   [[self class] ensureCacheDirectory];
