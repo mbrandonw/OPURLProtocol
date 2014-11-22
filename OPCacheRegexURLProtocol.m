@@ -15,9 +15,12 @@
 }
 
 +(BOOL) requestIsCacheable:(NSURLRequest *)request {
-  for (NSRegularExpression *regex in [[self class] cacheableURLRegexes]) {
+  NSString *urlString = request.URL.absoluteString;
+  if (! urlString) {
+    return NO;
+  }
 
-    NSString *urlString = request.URL.absoluteString;
+  for (NSRegularExpression *regex in [[self class] cacheableURLRegexes]) {
     if ([regex matchesInString:urlString options:0 range:NSMakeRange(0, urlString.length)].count > 0) {
       return YES;
     }
